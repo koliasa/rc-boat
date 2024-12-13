@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Панель управління судном</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: monospace, Courier, "Courier New", sans-serif;
+        background-color: #222;
+        color: #0f0;
+        display: grid;
+        grid-template-areas:
+          "top top top"
+          "left center right"
+          "left bottom right";
+        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+        gap: 10px;
+        overflow: auto;
+      }
+
+      .frame {
+        border: 3px solid #0f0;
+        padding: 10px;
+        overflow: auto;
+      }
+
+      .top-frame {
+        grid-area: top;
+        text-align: center;
+      }
+
+      .left-frame {
+        grid-area: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        overflow-y: auto;
+        height: 100%;
+        padding-right: 10px;
+      }
+
+      .center-frame {
+        grid-area: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: center;
+        overflow: auto;
+      }
+
+      .right-frame {
+        grid-area: right;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        overflow: auto;
+      }
+
+      .bottom-frame {
+        grid-area: bottom;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: auto;
+      }
+
+      .slider,
+      .horizontal-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #444;
+        border: 3px solid #0f0;
+        margin: 10px 0;
+      }
+
+      .slider {
+        height: 200px;
+        width: 30px;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+      }
+
+      .horizontal-slider {
+        width: 100%;
+        height: 30px;
+      }
+
+      .status div,
+      .motion div {
+        margin: 5px 0;
+        font-size: 18px;
+      }
+
+      .compass {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      .button {
+        margin: 5px 0;
+        padding: 10px;
+        background-color: #444;
+        color: #0f0;
+        border: 1px solid #0f0;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .button:hover {
+        background-color: #0f0;
+        color: #222;
+      }
+
+      .direction-buttons {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+      }
+
+      .direction-button {
+        width: 120px;
+        padding: 10px;
+        background-color: #444;
+        color: #0f0;
+        border: 3px solid #0f0;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .direction-button.active {
+        background-color: #0f0;
+        color: #222;
+      }
+
+      .direction-button:hover {
+        background-color: #0f0;
+        color: #222;
+      }
+
+      .slider-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .slider-container input[type="range"] {
+        width: 80%;
+        max-width: 400px;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .slider-container div {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .sirena-button,
+      .autopilot-button,
+      .light-button,
+      .nav-light-button,
+      .mass-button,
+      .speaker-button,
+      .sonar-button {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #444;
+        color: #0f0;
+        border: 3px solid #0f0;
+        font-size: 16px;
+        text-align: center;
+        line-height: 100px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        margin-bottom: 10px;
+      }
+
+      .sirena-button.active,
+      .autopilot-button.active,
+      .light-button.active,
+      .nav-light-button.active,
+      .mass-button.active,
+      .speaker-button.active,
+      .sonar-button.active {
+        background-color: #0f0;
+        color: #222;
+      }
+
+      .sirena-button:focus,
+      .autopilot-button:focus,
+      .light-button:focus,
+      .nav-light-button:focus,
+      .mass-button:focus,
+      .speaker-button:focus,
+      .sonar-button:focus {
+        outline: none;
+      }
+
+      .frame div {
+        margin-bottom: 15px;
+      }
+
+      .button-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .sirena-button {
+        width: 130px;
+        height: 130px;
+        font-size: 18px;
+      }
+
+      .button div,
+      .button-container div,
+      .sirena-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .left-frame div,
+      .right-frame div {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .left-frame .button-container,
+      .right-frame .button-container {
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "center"
+            "left"
+            "right"
+            "bottom";
+        }
+
+        .direction-buttons {
+          flex-direction: row;
+          justify-content: space-evenly;
+          width: 100%;
+          gap: 10px;
+        }
+
+        .frame {
+          padding: 10px;
+        }
+
+        .slider-container input[type="range"] {
+          width: 90%;
+        }
+
+        .slider {
+          height: 150px;
+        }
+
+        .horizontal-slider {
+          width: 90%;
+        }
+
+        .status div,
+        .motion div {
+          font-size: 14px;
+        }
+
+        .environment,
+        .motion {
+          display: none;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "center"
+            "left"
+            "right"
+            "bottom";
+        }
+
+        .direction-buttons {
+          flex-direction: row;
+          justify-content: space-evenly;
+          width: 100%;
+          gap: 10px;
+        }
+
+        .slider-container input[type="range"] {
+          width: 85%;
+        }
+
+        .slider {
+          height: 120px;
+        }
+
+        .horizontal-slider {
+          width: 85%;
+        }
+
+        .environment,
+        .motion {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame left-frame">
+      <div>Двигун</div>
+      <div class="sirena-button" onclick="toggleEngine()">Запуск</div>
+
+      <div class="button-container">
+        <div>
+          <div>Автопілот</div>
+          <div class="autopilot-button" onclick="toggleAutopilot()">Увімк.</div>
+        </div>
+        <div>
+          <div>Світло</div>
+          <div class="light-button" onclick="toggleLight()">Увімк.</div>
+        </div>
+        <div>
+          <div>Масса</div>
+          <div class="mass-button" onclick="toggleMass()">Увімк.</div>
+        </div>
+      </div>
+
+      <div class="button-container">
+        <div>
+          <div>Динамік</div>
+          <div class="speaker-button" onclick="toggleSpeaker()">Увімк.</div>
+        </div>
+        <div>
+          <div>Сонар</div>
+          <div class="sonar-button" onclick="toggleSonar()">Увімк.</div>
+        </div>
+        <div>
+          <div>Нав. вогні</div>
+          <div class="nav-light-button" onclick="toggleNavLight()">Увімк.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame center-frame">
+      <div class="status">
+        <div>Рівень заряду: <span id="charge-level">100%</span></div>
+        <div>Швидкість судна: <span id="boat-speed">25 км/год</span></div>
+        <div>
+          Рух судна: <span id="throttle-direction-value">Нейтраль</span>
+        </div>
+        <div>Швидкість судна: <span id="throttle-speed-value">0%</span></div>
+        <div>Піро руля: <span id="rudder-value">0°</span></div>
+      </div>
+
+      <div class="motion">
+        <h2>Автопілот:</h2>
+        <div>Широта: <span id="autopilot-pitch">0°</span></div>
+        <div>Довгота: <span id="autopilot-roll">0°</span></div>
+      </div>
+    </div>
+
+    <div class="frame right-frame">
+      <div class="slider-container">
+        <div>Рух судна</div>
+        <div class="direction-buttons">
+          <div
+            class="direction-button"
+            onclick="updateThrottleDirection(1)"
+            id="throttle-forward"
+          >
+            Вперед
+          </div>
+          <div
+            class="direction-button"
+            onclick="updateThrottleDirection(0)"
+            id="throttle-neutral"
+          >
+            Нейтраль
+          </div>
+          <div
+            class="direction-button"
+            onclick="updateThrottleDirection(-1)"
+            id="throttle-reverse"
+          >
+            Назад
+          </div>
+        </div>
+      </div>
+      <div>
+        <div>Швидкість судна</div>
+        <div class="slider-container">
+          <input
+            type="range"
+            id="throttle-speed"
+            min="0"
+            max="100"
+            value="0"
+            class="slider"
+            oninput="updateThrottleSpeed()"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="frame bottom-frame">
+      <div>Піро руля</div>
+      <input
+        type="range"
+        id="rudder-slider"
+        min="-50"
+        max="50"
+        value="0"
+        class="horizontal-slider"
+        oninput="updateRudder()"
+      />
+    </div>
+
+    <script>
+      let engineStatus = false;
+      let autopilotStatus = false;
+      let lightStatus = false;
+      let massStatus = false;
+      let speakerStatus = false;
+      let sonarStatus = false;
+      let navLightStatus = false;
+
+      function toggleEngine() {
+        engineStatus = !engineStatus;
+        document
+          .querySelector(".sirena-button")
+          .classList.toggle("active", engineStatus);
+      }
+
+      function toggleAutopilot() {
+        autopilotStatus = !autopilotStatus;
+        document
+          .querySelector(".autopilot-button")
+          .classList.toggle("active", autopilotStatus);
+      }
+
+      function toggleLight() {
+        lightStatus = !lightStatus;
+        document
+          .querySelector(".light-button")
+          .classList.toggle("active", lightStatus);
+      }
+
+      function toggleMass() {
+        massStatus = !massStatus;
+        document
+          .querySelector(".mass-button")
+          .classList.toggle("active", massStatus);
+      }
+
+      function toggleSpeaker() {
+        speakerStatus = !speakerStatus;
+        document
+          .querySelector(".speaker-button")
+          .classList.toggle("active", speakerStatus);
+      }
+
+      function toggleSonar() {
+        sonarStatus = !sonarStatus;
+        document
+          .querySelector(".sonar-button")
+          .classList.toggle("active", sonarStatus);
+      }
+
+      function toggleNavLight() {
+        navLightStatus = !navLightStatus;
+        document
+          .querySelector(".nav-light-button")
+          .classList.toggle("active", navLightStatus);
+      }
+
+      function updateThrottleDirection(direction) {
+        const throttleValue =
+          direction === 0 ? "Нейтраль" : direction === 1 ? "Вперед" : "Назад";
+        document.getElementById("throttle-direction-value").textContent =
+          throttleValue;
+      }
+
+      function updateThrottleSpeed() {
+        const speed = document.getElementById("throttle-speed").value;
+        document.getElementById("throttle-speed-value").textContent =
+          speed + "%";
+      }
+
+      function updateRudder() {
+        const rudderValue = document.getElementById("rudder-slider").value;
+        document.getElementById("rudder-value").textContent = rudderValue + "°";
+      }
+    </script>
+  </body>
+</html>
